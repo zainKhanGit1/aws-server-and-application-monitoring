@@ -70,6 +70,10 @@ These alerts help identify high resource usage before it causes server performan
 
 ![Grafana Alert Rules](Images/image-3.png)
 
+![alt text](Images/image-new.png)
+
+![alt text](Images/image-cpu.png)
+
 ### 2. Website Application Monitoring Dashboard
 
 Monitors website availability, HTTP traffic, API performance, response times, and Node.js runtime metrics.
