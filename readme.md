@@ -28,6 +28,13 @@ A simple web tool hosted on the server that lets anyone check key details for a 
 
 ![Website Interface](Images/image-2.png)
 
+
+<br>
+
+---
+
+<br>
+
 ## Grafana Monitoring
 
 Built two dedicated Grafana dashboards to separate low-level server health from live website performance—making it easy to spot where a problem starts.
@@ -56,7 +63,11 @@ Set up automatic Grafana alerts to warn of heavy server strain before things cra
 ![memory utilization alert mail](Images/image-cpu.png)
 
 
+<br>
 
+---
+
+<br>
 ### 2. Website Application Monitoring Dashboard
 
 Keeps a real-time pulse on website uptime, traffic flow, API speed, and backend health so slowdowns get caught fast.
@@ -82,3 +93,14 @@ Set up instant email alerts in Grafana to catch problems before users complain:
 
 ![Alert Setup](Images/alert-setup.png)
 
+<br>
+
+---
+
+<br>
+
+## Future Improvements
+
+- **HTTPS Security:** Add an Nginx reverse proxy with Let's Encrypt SSL certificates for encrypted traffic.
+- **Slack / Discord Alerts:** Route Grafana alert notifications to a messaging channel alongside email for faster incident response.
+- **Containerized Stack:** Package Prometheus, Grafana, and the web app into Docker Compose for easier portability.
