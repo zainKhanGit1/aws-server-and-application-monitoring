@@ -1,106 +1,105 @@
-## Project Overview
+# AWS Server and Website Monitoring with Terraform, Prometheus and Grafana
 
-An automated AWS monitoring setup built with **Terraform** to keep an eye on server health and website uptime in real time using **Prometheus and Grafana**.
+A small but complete monitoring setup on AWS. It watches the health of a server and the uptime of a website, shows everything on live dashboards, and sends an email when something goes wrong.
 
-### How It Works
+The whole server is created with Terraform, so it can be rebuilt from code at any time.
 
-* **Infrastructure as Code:** Spun up an AWS EC2 server with Terraform and opened the essential ports (`22` for SSH, `80` for web traffic, `3000` for Grafana, `3001` for the web app, `9090` for Prometheus, and `9100` for Node Exporter).
-* **Fast Scripted Setup:** Automated the installation of Prometheus, Node Exporter, and Grafana using shell scripts so the monitoring stack spins up quickly without manual guesswork.
-* **Live Visibility:** Node Exporter pulls raw server stats (CPU, memory, disk), Prometheus collects and stores those metrics, and Grafana turns them into clear visual dashboards—helping spot slowdowns before users feel them.
-* **Custom Domain:** Pointed `web.zaink.store` to the EC2 public IP using **Amazon Route 53** for easy access.
+## Architecture
 
-## Website Features
+![Architecture diagram](<Images/architecture (2).png>)
 
-### Domain Inspector
+## What This Project Does
 
-A simple web tool hosted on the server that lets anyone check key details for a domain in seconds:
+* **Builds the server with code:** Terraform creates the AWS EC2 server and opens only the ports the project needs: `22` (SSH), `80` (web), `3000` (Grafana), `3001` (web app), `9090` (Prometheus) and `9100` (Node Exporter).
+* **Installs the tools with scripts:** Shell scripts install Prometheus, Node Exporter and Grafana, so there is no long manual setup.
+* **Shows what is happening:** Node Exporter reads the server's CPU, memory and disk numbers. Prometheus collects and stores them. Grafana turns them into easy-to-read dashboards, so slowdowns can be spotted early.
+* **Uses a real domain:** `web.zaink.store` points to the server's public IP using Amazon Route 53.
 
-* **IP Addresses**
-* **Nameservers**
-* **Mail Servers (MX)**
-* **DNS Records**
+## The Website: Domain Inspector
+
+The server also hosts a small web tool. Type in a domain name and it shows:
+
+* IP addresses
+* Nameservers
+* Mail servers (MX records)
+* Other DNS records
+
+The tool is also what the monitoring watches. Every visit creates traffic, response times and status codes that appear on the dashboards.
 
 ## Screenshots
 
-![AWS Infrastructure](Images/Capture.PNG)
+![AWS infrastructure](Images/web.png)
 
-![Infrastructure Configuration](Images/image-1.png)
+![Infrastructure configuration](Images/image-1.png)
 
-![Website Interface](Images/image-2.png)
-
-
-<br>
+![Website interface](Images/image-2.png)
 
 ---
 
-<br>
+## Grafana Dashboards
 
-## Grafana Monitoring
+There are two dashboards. One looks at the server itself, and the other looks at the website running on it. This makes it easier to tell where a problem starts: the machine or the app.
 
-Built two dedicated Grafana dashboards to separate low-level server health from live website performance—making it easy to spot where a problem starts.
+### 1. Web Server Dashboard
 
-### 1. Web Server Monitoring Dashboard
+Shows how healthy the EC2 server is.
 
-Watches the EC2 machine's hardware limits, storage, and network flow in real time.
+**What you can see:**
 
-#### What It Tracks
+* **Basic info:** CPU cores, RAM and swap size, uptime, active network connections, and 5- and 15-minute load averages.
+* **Live gauges:** Current CPU, memory and disk usage as percentages.
+* **Trends over time:** CPU spikes, memory use, network traffic in and out, and disk read and write speed.
 
-* **System Specs & Load:** Total CPU cores, total RAM and swap space, server uptime, active network connections, and 5- / 15-minute system load averages.
-* **Live Usage Gauges:** Real-time percentages for CPU, memory, and root disk usage (used vs. total space).
-* **Performance Trends:** Live graphs tracking CPU spikes, memory consumption, inbound/outbound network traffic, and disk read/write speeds.
+**Email alerts:**
 
-#### Automated Email Alerts
+* **High memory:** An email is sent if memory stays above **70%** for more than **1 minute**.
+* **High CPU:** An email is sent if CPU stays above **90%** for more than **1 minute**.
 
-Set up automatic Grafana alerts to warn of heavy server strain before things crash:
+![Grafana alert rules](Images/image-new.png)
 
-* **High Memory:** Sends an email alert if memory usage stays above **70%** for more than **1 minute**.
-* **High CPU:** Sends an email alert if CPU usage stays above **90%** for more than **1 minute**.
+![CPU alert email](Images/image-3.png)
 
-![Grafana Alert Rules Dashboard](Images/image-new.png)
-
-![CPU utilization alert mail](Images/image-3.png)
-
-![memory utilization alert mail](Images/image-cpu.png)
-
-
-<br>
+![Memory alert email](Images/image-cpu.png)
 
 ---
 
-<br>
-### 2. Website Application Monitoring Dashboard
+### 2. Website Application Dashboard
 
-Keeps a real-time pulse on website uptime, traffic flow, API speed, and backend health so slowdowns get caught fast.
+Shows how the website is doing: is it up, how fast is it, and how much traffic is it getting.
 
-#### What It Tracks
+**What you can see:**
 
-* **App Health & Speed:** Live status (UP/DOWN), total uptime, requests per second, success vs. error rates, and response speeds (average and slowest 5%).
-* **Web Traffic:** Breakdown of incoming requests (`GET`, `POST`, `PUT`, `DELETE`, `HEAD`), response status codes (`200`, `404`, etc.), and busiest API routes.
-* **Node.js Backend:** CPU load, memory and heap usage, and event loop delays to make sure the server stays responsive under traffic.
+* **Health and speed:** UP or DOWN status, uptime, requests per second, success and error rates, and response times (average and slowest 5%).
+* **Traffic:** Request types (`GET`, `POST`, `PUT`, `DELETE`, `HEAD`), status codes (`200`, `404` and so on), and the busiest routes.
+* **Node.js backend:** CPU use, memory and heap use, and event loop delay, which show whether the app stays responsive under load.
 
-#### Automated Email Alerts
+**Email alerts:**
 
-Set up instant email alerts in Grafana to catch problems before users complain:
+* **Site down:** An email is sent if the website is down for more than **1 minute**.
+* **Slow responses:** An email is sent if response time goes above **500ms** for more than **1 minute**.
 
-* **Site Outage:** Fires an email if the website goes down for more than **1 minute**.
-* **Slow Responses:** Fires an email if response times climb past **500ms** for more than **1 minute**.
+![Website monitoring dashboard](Images/WEBSITE%20MONITORING%20DASHBOARD2.PNG)
 
-![Website Application Monitoring Dashboard](Images/WEBSITE%20MONITORING%20DASHBOARD2.PNG)
+![Alert email for slow response time](Images/AlertMail1.png)
 
-![Alert Mail (response time)](Images/AlertMail1.png)
+![Alert email for website down](Images/alert2.png)
 
-![Alert Mail (website down)](Images/alert2.png)
-
-![Alert Setup](Images/alert-setup.png)
-
-<br>
+![Alert setup](Images/alert-setup.png)
 
 ---
 
-<br>
+## Tools Used
 
-## Future Improvements
+| Area | Tools |
+| --- | --- |
+| Infrastructure as code | Terraform |
+| Cloud | AWS EC2, Amazon Route 53 |
+| Monitoring | Prometheus, Node Exporter, Grafana |
+| Web app | Node.js |
+| Setup | Shell scripts |
 
-- **HTTPS Security:** Add an Nginx reverse proxy with Let's Encrypt SSL certificates for encrypted traffic.
-- **Slack / Discord Alerts:** Route Grafana alert notifications to a messaging channel alongside email for faster incident response.
-- **Containerized Stack:** Package Prometheus, Grafana, and the web app into Docker Compose for easier portability.
+## What I Plan to Add Next
+
+* **HTTPS:** Put Nginx in front of the app and use free Let's Encrypt certificates, so traffic is encrypted.
+* **Slack or Discord alerts:** Send alerts to a chat channel as well as email, so they are seen faster.
+* **Docker Compose:** Run Prometheus, Grafana and the web app as containers, so the stack is easier to move and run anywhere.
