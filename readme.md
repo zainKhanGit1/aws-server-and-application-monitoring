@@ -61,18 +61,20 @@ Monitors EC2 server health, resource utilization, and network activity.
 
 Configured automatic email alerts in Grafana for the following conditions:
 
-- **High Memory Usage:** Sends an email alert if memory utilization exceeds 90% for more than 1 minute.
+- **High Memory Usage:** Sends an email alert if memory utilization exceeds 70% for more than 1 minute.
 - **High CPU Usage:** Sends an email alert if CPU utilization exceeds 90% for more than 1 minute.
 
 These alerts help identify high resource usage before it causes server performance issues or downtime.
+<!-- 
+![Web Server Monitoring Dashboard](Images/image.png) -->
 
-![Web Server Monitoring Dashboard](Images/image.png)
+![Grafana Alert Rules Dashboard](Images/image-new.png)
 
-![Grafana Alert Rules](Images/image-3.png)
+![CPU utilization alert mail](Images/image-3.png)
 
-![alt text](Images/image-new.png)
 
-![alt text](Images/image-cpu.png)
+
+![memory utilization alert mail](Images/image-cpu.png)
 
 ### 2. Website Application Monitoring Dashboard
 
