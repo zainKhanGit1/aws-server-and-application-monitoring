@@ -30,82 +30,55 @@ A simple web tool hosted on the server that lets anyone check key details for a 
 
 ## Grafana Monitoring
 
-Created two separate Grafana dashboards to monitor EC2 server health and website application performance.
+Built two dedicated Grafana dashboards to separate low-level server health from live website performance—making it easy to spot where a problem starts.
 
 ### 1. Web Server Monitoring Dashboard
 
-Monitors EC2 server health, resource utilization, and network activity.
+Watches the EC2 machine's hardware limits, storage, and network flow in real time.
 
-**Server Monitoring Stats (Gauges)**
+#### What It Tracks
 
-- CPU Utilization
-- Memory Utilization
-- Disk Utilization
-- System Load Average (5-minute and 15-minute)
-- Active TCP Connections
-- Total CPU Cores
-- Server Uptime
-- Total Swap Memory (GiB)
-- Root Filesystem Total Size (GiB)
-- Root Filesystem Used Space (GiB)
-- Total RAM (GiB)
+* **System Specs & Load:** Total CPU cores, total RAM and swap space, server uptime, active network connections, and 5- / 15-minute system load averages.
+* **Live Usage Gauges:** Real-time percentages for CPU, memory, and root disk usage (used vs. total space).
+* **Performance Trends:** Live graphs tracking CPU spikes, memory consumption, inbound/outbound network traffic, and disk read/write speeds.
 
-**Server Monitoring Graphs**
+#### Automated Email Alerts
 
-- EC2 CPU Utilization
-- Memory Utilization
-- Network Traffic (Inbound and Outbound)
-- Disk I/O (Read and Write)
+Set up automatic Grafana alerts to warn of heavy server strain before things crash:
 
-**Alert Rules**
-
-Configured automatic email alerts in Grafana for the following conditions:
-
-- **High Memory Usage:** Sends an email alert if memory utilization exceeds 70% for more than 1 minute.
-- **High CPU Usage:** Sends an email alert if CPU utilization exceeds 90% for more than 1 minute.
-
-These alerts help identify high resource usage before it causes server performance issues or downtime.
-<!-- 
-![Web Server Monitoring Dashboard](Images/image.png) -->
+* **High Memory:** Sends an email alert if memory usage stays above **70%** for more than **1 minute**.
+* **High CPU:** Sends an email alert if CPU usage stays above **90%** for more than **1 minute**.
 
 ![Grafana Alert Rules Dashboard](Images/image-new.png)
 
 ![CPU utilization alert mail](Images/image-3.png)
 
-
-
 ![memory utilization alert mail](Images/image-cpu.png)
+
+
 
 ### 2. Website Application Monitoring Dashboard
 
-Monitors website availability, HTTP traffic, API performance, response times, and Node.js runtime metrics.
+Keeps a real-time pulse on website uptime, traffic flow, API speed, and backend health so slowdowns get caught fast.
 
-**Application Monitoring Stats**
+#### What It Tracks
 
-- Application Status (UP/DOWN)
-- Average Response Time
-- Success Rate
-- Error Rate
-- P95 Response Time
-- Requests per Second
-- Application Uptime
+* **App Health & Speed:** Live status (UP/DOWN), total uptime, requests per second, success vs. error rates, and response speeds (average and slowest 5%).
+* **Web Traffic:** Breakdown of incoming requests (`GET`, `POST`, `PUT`, `DELETE`, `HEAD`), response status codes (`200`, `404`, etc.), and busiest API routes.
+* **Node.js Backend:** CPU load, memory and heap usage, and event loop delays to make sure the server stays responsive under traffic.
 
-**HTTP Traffic Monitoring**
+#### Automated Email Alerts
 
-- HTTP Traffic by Method (GET, POST, PUT, DELETE, HEAD)
-- Response Time Percentiles (P50, P95, P99)
-- Requests by HTTP Method
-- HTTP Responses by Status Code (200, 404, etc.)
-- Top Endpoints and Request Counts
+Set up instant email alerts in Grafana to catch problems before users complain:
 
-**Node.js Runtime Monitoring**
+* **Site Outage:** Fires an email if the website goes down for more than **1 minute**.
+* **Slow Responses:** Fires an email if response times climb past **500ms** for more than **1 minute**.
 
-- CPU Usage
-- Memory Usage
-- Event Loop Lag
-- Heap Usage
-- Application Uptime
+![Website Application Monitoring Dashboard](Images/WEBSITE%20MONITORING%20DASHBOARD2.PNG)
 
-This dashboard helps track website health, identify slow API responses, monitor HTTP errors, and detect application performance issues.
+![Alert Mail (response time)](Images/AlertMail1.png)
 
-![Website Application Monitoring Dashboard](Images/image-4.png)
+![Alert Mail (website down)](Images/alert2.png)
+
+![Alert Setup](Images/alert-setup.png)
+
