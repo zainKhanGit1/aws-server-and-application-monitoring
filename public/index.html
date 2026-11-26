@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Domain inspector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fog: #e9eff2;
+    --panel: #ffffff;
+    --ink: #12232e;
+    --muted: #5b707d;
+    --line: #cfdce2;
+    --teal: #0e7c86;
+    --teal-dark: #0a5f67;
+    --rust: #b4441f;
+    --sans: "Sora", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fog: #0f1b22;
+      --panel: #16262f;
+      --ink: #e6eef2;
+      --muted: #8fa6b3;
+      --line: #284049;
+      --teal: #4cc3cd;
+      --teal-dark: #7fd8df;
+      --rust: #ff8a62;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fog);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 56px 20px 40px; }
+  h1 { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; margin: 0 0 10px; letter-spacing: -0.02em; }
+  .lede { color: var(--muted); margin: 0 0 32px; max-width: 52ch; }
+
+  form { display: flex; gap: 10px; flex-wrap: wrap; }
+  input {
+    flex: 1 1 280px;
+    font: 500 1rem var(--mono);
+    padding: 16px 18px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--ink);
+  }
+  input::placeholder { color: var(--muted); }
+  input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+  button {
+    font: 600 1rem var(--sans);
+    padding: 16px 28px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--teal);
+    color: #fff;
+    cursor: pointer;
+  }
+  button:hover { background: var(--teal-dark); }
+  button:disabled { opacity: 0.6; cursor: progress; }
+  @media (prefers-color-scheme: dark) { button { color: #08171c; } }
+
+  #status { min-height: 1.5em; margin: 16px 0 0; color: var(--muted); }
+  #status.error { color: var(--rust); font-weight: 600; }
+
+  #result { display: none; margin-top: 24px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .head { padding: 28px 28px 24px; border-bottom: 1px solid var(--line); }
+  .head .name { color: var(--muted); font-size: 0.95rem; margin: 0 0 4px; overflow-wrap: anywhere; }
+  .head .ip { font: 500 clamp(1.8rem, 7vw, 2.8rem) var(--mono); letter-spacing: -0.02em; margin: 0; overflow-wrap: anywhere; }
+  .head .rdns { color: var(--muted); font: 400 0.85rem var(--mono); margin: 6px 0 0; overflow-wrap: anywhere; }
+
+  .row { display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 16px 28px; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row dt { color: var(--muted); font-size: 0.9rem; font-weight: 600; }
+  .row dd { margin: 0; font: 400 0.9rem var(--mono); }
+  .row dd div { padding: 2px 0; overflow-wrap: anywhere; }
+  .row .prio { color: var(--muted); margin-right: 8px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; gap: 4px; } }
+
+  footer { margin-top: 36px; color: var(--muted); font-size: 0.85rem; }
+  footer a { color: var(--teal-dark); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Domain inspector</h1>
+  <p class="lede">Paste a website address to see where it lives: IP addresses, nameservers, mail servers and DNS records.</p>
+
+  <form id="form">
+    <input id="url" name="url" type="text" placeholder="example.com or https://example.com/page" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Website address" required>
+    <button id="go" type="submit">Look up</button>
+  </form>
+  <p id="status" role="status"></p>
+
+  <section id="result" aria-live="polite"></section>
+
+  <footer>Every lookup is counted and timed. See the raw numbers at <a href="/metrics">/metrics</a>.</footer>
+</main>
+
+<script>
+  const form = document.getElementById("form");
+  const input = document.getElementById("url");
+  const button = document.getElementById("go");
+  const statusEl = document.getElementById("status");
+  const result = document.getElementById("result");
+
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text; // textContent: DNS data is untrusted
+    return node;
+  }
+
+  function addRow(list, label, items) {
+    if (!items || !items.length) return;
+    const row = el("div", "row");
+    row.appendChild(el("dt", "", label));
+    const dd = el("dd");
+    items.forEach((item) => {
+      const line = el("div");
+      if (typeof item === "object") {
+        line.appendChild(el("span", "prio", String(item.priority)));
+        line.appendChild(document.createTextNode(item.exchange));
+      } else {
+        line.textContent = item;
+      }
+      dd.appendChild(line);
+    });
+    row.appendChild(dd);
+    list.appendChild(row);
+  }
+
+  function render(d) {
+    result.replaceChildren();
+
+    const head = el("div", "head");
+    head.appendChild(el("p", "name", d.hostname));
+    head.appendChild(el("p", "ip", (d.a && d.a[0]) || (d.aaaa && d.aaaa[0]) || "No address record"));
+    if (d.reverse && d.reverse.length) head.appendChild(el("p", "rdns", "Reverse DNS: " + d.reverse.join(", ")));
+    result.appendChild(head);
+
+    const list = el("dl");
+    list.style.margin = "0";
+    addRow(list, "IPv4 (A)", d.a);
+    addRow(list, "IPv6 (AAAA)", d.aaaa);
+    addRow(list, "CNAME", d.cname);
+    if (d.zone && !d.isIp) addRow(list, "Domain", [d.zone]);
+    addRow(list, "Nameservers", d.ns);
+    addRow(list, "Mail (MX)", d.mx);
+    addRow(list, "TXT", d.txt);
+    if (d.soa) {
+      addRow(list, "SOA", [
+        "primary: " + d.soa.nsname,
+        "admin: " + d.soa.hostmaster,
+        "serial: " + d.soa.serial,
+      ]);
+    }
+    result.appendChild(list);
+    result.style.display = "block";
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const value = input.value.trim();
+    if (!value) return;
+
+    button.disabled = true;
+    statusEl.className = "";
+    statusEl.textContent = "Looking up " + value + "...";
+    result.style.display = "none";
+
+    try {
+      const res = await fetch("/api/lookup?url=" + encodeURIComponent(value));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Lookup failed");
+      statusEl.textContent = "";
+      render(data);
+    } catch (err) {
+      statusEl.className = "error";
+      statusEl.textContent = err.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
